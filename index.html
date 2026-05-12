@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vector Database — Semantic Search Visualised</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f6f5f0; color: #3d3d3a; min-height: 100vh; padding: 2rem 1rem; }
+  .page { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: #73726c; margin-bottom: 2rem; }
+  .card { background: #fff; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.12); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 500; color: #73726c; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  canvas { display: block; width: 100%; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); background: #f6f5f0; cursor: default; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #73726c; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .steps { list-style: none; }
+  .step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid rgba(0,0,0,0.08); }
+  .step:last-child { border-bottom: none; }
+  .step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+  .step-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .step-desc { font-size: 12px; color: #73726c; line-height: 1.6; }
+  .tooltip { position: absolute; background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 8px 12px; font-size: 12px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 220px; display: none; }
+  .tooltip strong { display: block; font-size: 13px; margin-bottom: 2px; }
+  .canvas-wrap { position: relative; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+  footer { text-align: center; font-size: 12px; color: #a0a09a; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Vector Database — Semantic Search</h1>
+  <p class="subtitle">How "The soup was way too salty" finds reviews that mean the same thing, without sharing a single word.</p>
+
+  <div class="card">
+    <div class="section-label">Semantic space — hover a point to explore</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>Your query</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Strong match (returned)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#EF9F27"></div>Weak match</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#B4B2A9"></div>No match</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="cvs" height="360"></canvas>
+      <div class="tooltip" id="tip"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">How the match was found</div>
+    <ul class="steps">
+      <li class="step">
+        <div class="step-num" style="background:#EEEDFE;color:#3C3489">1</div>
+        <div>
+          <div class="step-title">Query encoded to a vector</div>
+          <div class="step-desc">"The soup was way too salty" → [0.68, 0.78, 0.82, 0.88 …] — a point in high-dimensional space capturing excess sodium + negative experience.</div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-num" style="background:#EEEDFE;color:#3C3489">2</div>
+        <div>
+          <div class="step-title">Every stored review has its own vector</div>
+          <div class="step-desc">"The broth made my mouth pucker" → [0.71, 0.74, 0.79, 0.85 …] — similar dimensions fire because the <em>meaning</em> is the same, even though the words are completely different.</div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-num" style="background:#E1F5EE;color:#085041">3</div>
+        <div>
+          <div class="step-title">Distance calculated to every point</div>
+          <div class="step-desc">Cosine similarity measures the angle between vectors. A small angle = similar meaning. "Puckering broth" scores 0.82 — close enough to return as a match.</div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step-num" style="background:#E1F5EE;color:#085041">4</div>
+        <div>
+          <div class="step-title">Nearest neighbours returned</div>
+          <div class="step-desc">All reviews within the similarity threshold are surfaced. A keyword search would have missed every match except the first — they share no words with the query.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <footer>Created with Claude &mdash; Anthropic &middot; IsoMetrix USA Inc</footer>
+</div>
+
+<script>
+const points = [
+  { x: 0.50, y: 0.42, color:'#7F77DD', r:9,  label:'Your query',                   sub:'"The soup was way too salty"',        sim: null,  match: true,  anchor:'right' },
+  { x: 0.38, y: 0.52, color:'#1D9E75', r:8,  label:'Puckering broth',              sub:'Similarity: 0.82',                   sim: 0.82, match: true,  anchor:'left'  },
+  { x: 0.56, y: 0.34, color:'#1D9E75', r:7,  label:'Needed a gallon of water',     sub:'Similarity: 0.87',                   sim: 0.87, match: true,  anchor:'right' },
+  { x: 0.43, y: 0.36, color:'#1D9E75', r:7,  label:'Over-seasoned, couldn\'t finish', sub:'Similarity: 0.78',                sim: 0.78, match: true,  anchor:'left'  },
+  { x: 0.27, y: 0.82, color:'#B4B2A9', r:6,  label:'Pasta perfectly al dente',     sub:'Similarity: 0.18',                   sim: 0.18, match: false, anchor:'right' },
+  { x: 0.76, y: 0.86, color:'#B4B2A9', r:6,  label:'Very friendly staff',          sub:'Similarity: 0.06',                   sim: 0.06, match: false, anchor:'left'  },
+  { x: 0.18, y: 0.67, color:'#B4B2A9', r:5,  label:'Nice ambience',                sub:'Similarity: 0.09',                   sim: 0.09, match: false, anchor:'right' },
+  { x: 0.82, y: 0.60, color:'#EF9F27', r:6,  label:'Watery soup',                  sub:'Similarity: 0.52',                   sim: 0.52, match: false, anchor:'left'  },
+];
+
+const cvs = document.getElementById('cvs');
+const tip = document.getElementById('tip');
+const ctx = cvs.getContext('2d');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+function resize() {
+  const W = cvs.parentElement.clientWidth;
+  const H = 360;
+  cvs.style.width = W + 'px';
+  cvs.style.height = H + 'px';
+  cvs.width = W * DPR;
+  cvs.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  draw(null);
+}
+
+function px(p) {
+  const W = cvs.clientWidth, H = cvs.clientHeight;
+  const pad = 20;
+  return { x: pad + p.x * (W - pad * 2), y: pad + p.y * (H - pad * 2) };
+}
+
+function draw(hovered) {
+  const W = cvs.clientWidth, H = cvs.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = '#f6f5f0';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+  ctx.lineWidth = 0.5;
+  for (let gx = 0; gx <= W; gx += 64) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+  for (let gy = 0; gy <= H; gy += 60) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText('Sodium / excess →', 8, H - 8);
+  ctx.save(); ctx.translate(14, H - 40); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Negative sentiment →', 0, 0); ctx.restore();
+
+  const query = px(points[0]);
+  points.slice(1).forEach(p => {
+    if (!p.match) return;
+    const pp = px(p);
+    ctx.beginPath();
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle = p.color + '70';
+    ctx.lineWidth = 1;
+    ctx.moveTo(query.x, query.y);
+    ctx.lineTo(pp.x, pp.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const mx = (query.x + pp.x) / 2;
+    const my = (query.y + pp.y) / 2;
+    ctx.font = '500 11px -apple-system, sans-serif';
+    ctx.fillStyle = p.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(p.sim.toFixed(2), mx, my - 5);
+  });
+
+  points.forEach((p, i) => {
+    const pp = px(p);
+    const isHov = hovered === i;
+    const r = isHov ? p.r + 3 : p.r;
+
+    if (p.match && i > 0) {
+      ctx.beginPath();
+      ctx.arc(pp.x, pp.y, r + 8, 0, Math.PI*2);
+      ctx.fillStyle = p.color + '22';
+      ctx.fill();
+    }
+    if (i === 0) {
+      ctx.beginPath();
+      ctx.arc(pp.x, pp.y, r + 5, 0, Math.PI*2);
+      ctx.strokeStyle = p.color + '55';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(pp.x, pp.y, r, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+
+    const lx = p.anchor === 'right' ? pp.x + r + 6 : pp.x - r - 6;
+    ctx.textAlign = p.anchor === 'right' ? 'left' : 'right';
+    ctx.font = '500 12px -apple-system, sans-serif';
+    ctx.fillStyle = i === 0 ? '#534AB7' : (p.match ? '#3d3d3a' : '#888780');
+    ctx.fillText(p.label, lx, pp.y - 2);
+    if (i === 0 || isHov) {
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.fillStyle = '#73726c';
+      ctx.fillText(p.sub, lx, pp.y + 12);
+    }
+  });
+}
+
+function getHovered(mx, my) {
+  let found = null;
+  points.forEach((p, i) => {
+    const pp = px(p);
+    if (Math.hypot(pp.x - mx, pp.y - my) < p.r + 10) found = i;
+  });
+  return found;
+}
+
+cvs.addEventListener('mousemove', e => {
+  const rect = cvs.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const h = getHovered(mx, my);
+  cvs.style.cursor = h !== null ? 'pointer' : 'default';
+  draw(h);
+  if (h !== null) {
+    const p = points[h];
+    tip.style.display = 'block';
+    tip.style.left = (e.clientX - rect.left + 16) + 'px';
+    tip.style.top = (e.clientY - rect.top - 10) + 'px';
+    tip.innerHTML = `<strong>${p.label}</strong>${p.sub}${p.sim !== null ? `<br><span style="color:${p.color};font-weight:500">Similarity: ${p.sim.toFixed(2)}</span>` : ''}`;
+  } else {
+    tip.style.display = 'none';
+  }
+});
+cvs.addEventListener('mouseleave', () => { draw(null); tip.style.display='none'; });
+
+window.addEventListener('resize', resize);
+resize();
+</script>
+</body>
+</html>
