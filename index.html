@@ -3,227 +3,1106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vector Database — Semantic Search Visualised</title>
+<title>Vector Databases Explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f6f5f0; color: #3d3d3a; min-height: 100vh; padding: 2rem 1rem; }
-  .page { max-width: 760px; margin: 0 auto; }
-  h1 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
-  .subtitle { font-size: 14px; color: #73726c; margin-bottom: 2rem; }
-  .card { background: #fff; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.12); padding: 1.5rem; margin-bottom: 1.5rem; }
-  .section-label { font-size: 11px; font-weight: 500; color: #73726c; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
-  canvas { display: block; width: 100%; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.08); background: #f6f5f0; cursor: default; }
-  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #73726c; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .steps { list-style: none; }
-  .step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid rgba(0,0,0,0.08); }
-  .step:last-child { border-bottom: none; }
-  .step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
-  .step-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
-  .step-desc { font-size: 12px; color: #73726c; line-height: 1.6; }
-  .tooltip { position: absolute; background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 8px 12px; font-size: 12px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 220px; display: none; }
-  .tooltip strong { display: block; font-size: 13px; margin-bottom: 2px; }
-  .canvas-wrap { position: relative; }
-  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
-  footer { text-align: center; font-size: 12px; color: #a0a09a; margin-top: 2rem; }
+:root {
+  --bg: #0f0f0e;
+  --surface: #181817;
+  --surface2: #222220;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8e6df;
+  --text2: #8c8a82;
+  --text3: #555450;
+  --purple: #9d96f5;
+  --purple-dim: rgba(157,150,245,0.15);
+  --green: #4ecb94;
+  --green-dim: rgba(78,203,148,0.12);
+  --amber: #f0a855;
+  --amber-dim: rgba(240,168,85,0.12);
+  --red: #f07070;
+  --red-dim: rgba(240,112,112,0.12);
+  --blue: #60b8f5;
+  --blue-dim: rgba(96,184,245,0.12);
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --r: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Header ── */
+.header {
+  padding: 3rem 2rem 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.header-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--purple);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.header h1 {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+.header h1 em { font-style: normal; color: var(--purple); }
+.header p {
+  font-size: 15px;
+  color: var(--text2);
+  max-width: 520px;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Tabs ── */
+.tabs-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem 3rem;
+}
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 4px;
+  margin-bottom: 2px;
+  overflow-x: auto;
+}
+.tab-btn {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 16px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  text-align: center;
+}
+.tab-btn:hover { color: var(--text); background: var(--surface2); }
+.tab-btn.active {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border2);
+}
+.tab-btn .act-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  display: block;
+  margin-bottom: 2px;
+}
+.tab-btn.active .act-num { color: var(--purple); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.5rem;
+  margin-bottom: 16px;
+}
+.card-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.card-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+/* ── Pipeline (Act 1) ── */
+.pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+.pipe-step {
+  flex: 1;
+  min-width: 120px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 12px;
+  position: relative;
+  text-align: center;
+}
+.pipe-step + .pipe-step { margin-left: 28px; }
+.pipe-step + .pipe-step::before {
+  content: '→';
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 16px;
+}
+.pipe-icon {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.pipe-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.pipe-sub {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+/* ── Chunking strategies ── */
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.strategy-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.strategy-card:hover, .strategy-card.active { border-color: var(--purple); }
+.strategy-card.active { background: var(--purple-dim); }
+.strategy-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+.strategy-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.strategy-pros-cons {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+}
+.pro { color: var(--green); }
+.con { color: var(--red); }
+
+.chunk-preview {
+  margin-top: 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  min-height: 80px;
+  transition: all 0.2s;
+}
+.chunk-preview-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+}
+.chunk-token {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: var(--mono);
+  margin: 3px;
+  border: 1px solid transparent;
+}
+
+/* ── Embedding visual ── */
+.embed-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.embed-text {
+  font-size: 13px;
+  color: var(--text);
+  flex: 0 0 auto;
+  max-width: 260px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-style: italic;
+}
+.embed-arrow { color: var(--text3); flex-shrink: 0; }
+.embed-vec {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.vec-cell {
+  width: 28px;
+  height: 22px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  transition: all 0.3s;
+}
+
+/* ── Canvas ── */
+canvas { display: block; width: 100%; border-radius: 8px; }
+.canvas-wrap { position: relative; }
+.tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  display: none;
+  z-index: 10;
+  max-width: 200px;
+}
+.tooltip strong { display: block; font-size: 13px; margin-bottom: 3px; color: var(--text); }
+.tooltip span { color: var(--text2); }
+
+/* ── Steps ── */
+.steps { list-style: none; }
+.step {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.step-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+/* ── Act 3 search ── */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.search-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--purple); }
+.search-btn {
+  padding: 10px 18px;
+  background: var(--purple);
+  color: #0f0f0e;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.search-btn:hover { opacity: 0.85; }
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  transition: all 0.3s;
+  background: var(--surface2);
+}
+.result-row.matched { border-color: var(--green); background: var(--green-dim); }
+.result-row.keyword-only { border-color: var(--purple); background: var(--purple-dim); }
+.result-text { flex: 1; font-size: 13px; color: var(--text); }
+.result-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.tag-semantic { background: var(--green-dim); color: var(--green); border: 1px solid rgba(78,203,148,0.3); }
+.tag-keyword  { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(157,150,245,0.3); }
+.tag-missed   { background: rgba(255,255,255,0.04); color: var(--text3); border: 1px solid var(--border); }
+.bar-wrap { width: 80px; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.sim-pct { font-family: var(--mono); font-size: 11px; min-width: 38px; text-align: right; flex-shrink: 0; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Misc ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) {
+  .two-col { grid-template-columns: 1fr; }
+  .pipeline { flex-direction: column; }
+  .pipe-step + .pipe-step { margin-left: 0; margin-top: 24px; }
+  .pipe-step + .pipe-step::before { content: '↓'; left: 50%; top: -18px; transform: translateX(-50%); }
+}
+.tag-inline {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+/* ── Suggestion chips ── */
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--purple); color: var(--text); }
+.chip.active { border-color: var(--purple); background: var(--purple-dim); color: var(--purple); }
 </style>
 </head>
 <body>
-<div class="page">
 
-  <h1>Vector Database — Semantic Search</h1>
-  <p class="subtitle">How "The soup was way too salty" finds reviews that mean the same thing, without sharing a single word.</p>
+<div class="header">
+  <div class="header-eyebrow">// Technical Explainer</div>
+  <h1>How <em>Vector Databases</em><br>understand meaning</h1>
+  <p>Using restaurant reviews as an example — from raw text to semantic search, step by step.</p>
+</div>
 
-  <div class="card">
-    <div class="section-label">Semantic space — hover a point to explore</div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>Your query</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Strong match (returned)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#EF9F27"></div>Weak match</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#B4B2A9"></div>No match</div>
-    </div>
-    <div class="canvas-wrap">
-      <canvas id="cvs" height="360"></canvas>
-      <div class="tooltip" id="tip"></div>
-    </div>
+<div class="tabs-wrap">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(0)">
+      <span class="act-num">ACT 1</span>
+      Ingestion & Chunking
+    </button>
+    <button class="tab-btn" onclick="switchTab(1)">
+      <span class="act-num">ACT 2</span>
+      The Vector Space
+    </button>
+    <button class="tab-btn" onclick="switchTab(2)">
+      <span class="act-num">ACT 3</span>
+      Semantic Search
+    </button>
   </div>
 
-  <div class="card">
-    <div class="section-label">How the match was found</div>
-    <ul class="steps">
-      <li class="step">
-        <div class="step-num" style="background:#EEEDFE;color:#3C3489">1</div>
-        <div>
-          <div class="step-title">Query encoded to a vector</div>
-          <div class="step-desc">"The soup was way too salty" → [0.68, 0.78, 0.82, 0.88 …] — a point in high-dimensional space capturing excess sodium + negative experience.</div>
+  <!-- ═══════════════════════════════════════════════
+       ACT 1 — INGESTION & CHUNKING
+  ═══════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-0">
+
+    <div class="card">
+      <div class="card-label">Overview</div>
+      <div class="card-title">Getting data into the vector database</div>
+      <div class="card-desc">Before any search can happen, every review must be processed and stored. This pipeline runs once per document — at write time, not query time.</div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="pipe-icon">📄</div>
+          <div class="pipe-label">Raw text</div>
+          <div class="pipe-sub">Original review content</div>
         </div>
-      </li>
-      <li class="step">
-        <div class="step-num" style="background:#EEEDFE;color:#3C3489">2</div>
-        <div>
-          <div class="step-title">Every stored review has its own vector</div>
-          <div class="step-desc">"The broth made my mouth pucker" → [0.71, 0.74, 0.79, 0.85 …] — similar dimensions fire because the <em>meaning</em> is the same, even though the words are completely different.</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">✂️</div>
+          <div class="pipe-label">Chunking</div>
+          <div class="pipe-sub">Split into meaningful pieces</div>
         </div>
-      </li>
-      <li class="step">
-        <div class="step-num" style="background:#E1F5EE;color:#085041">3</div>
-        <div>
-          <div class="step-title">Distance calculated to every point</div>
-          <div class="step-desc">Cosine similarity measures the angle between vectors. A small angle = similar meaning. "Puckering broth" scores 0.82 — close enough to return as a match.</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🧠</div>
+          <div class="pipe-label">Embedding</div>
+          <div class="pipe-sub">AI converts to numbers</div>
         </div>
-      </li>
-      <li class="step">
-        <div class="step-num" style="background:#E1F5EE;color:#085041">4</div>
-        <div>
-          <div class="step-title">Nearest neighbours returned</div>
-          <div class="step-desc">All reviews within the similarity threshold are surfaced. A keyword search would have missed every match except the first — they share no words with the query.</div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🗄️</div>
+          <div class="pipe-label">Storage</div>
+          <div class="pipe-sub">Vector saved to DB</div>
         </div>
-      </li>
-    </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Step 1 — Chunking strategies</div>
+      <div class="card-title">How do you split the text?</div>
+      <div class="card-desc">Chunking is one of the most consequential decisions in a vector DB pipeline. Too small and you lose context. Too large and the meaning gets diluted. Click each strategy to see how it splits an example review.</div>
+      <div class="strategy-grid">
+        <div class="strategy-card active" id="strat-0" onclick="selectStrategy(0)">
+          <div class="strategy-name">fixed_size</div>
+          <div class="strategy-desc">Split every N tokens regardless of sentence boundaries. Simple and predictable.</div>
+          <div class="strategy-pros-cons">
+            <span class="pro">✓ Fast, simple</span>&nbsp;&nbsp;
+            <span class="con">✗ Cuts mid-sentence</span>
+          </div>
+        </div>
+        <div class="strategy-card" id="strat-1" onclick="selectStrategy(1)">
+          <div class="strategy-name">sentence</div>
+          <div class="strategy-desc">Split at sentence boundaries. Each chunk is a complete thought.</div>
+          <div class="strategy-pros-cons">
+            <span class="pro">✓ Preserves meaning</span>&nbsp;&nbsp;
+            <span class="con">✗ Variable size</span>
+          </div>
+        </div>
+        <div class="strategy-card" id="strat-2" onclick="selectStrategy(2)">
+          <div class="strategy-name">sliding_window</div>
+          <div class="strategy-desc">Chunks overlap by N tokens so context isn't lost at boundaries.</div>
+          <div class="strategy-pros-cons">
+            <span class="pro">✓ No lost context</span>&nbsp;&nbsp;
+            <span class="con">✗ Duplicate storage</span>
+          </div>
+        </div>
+        <div class="strategy-card" id="strat-3" onclick="selectStrategy(3)">
+          <div class="strategy-name">semantic</div>
+          <div class="strategy-desc">An AI groups sentences by topic shift. Best quality, most expensive.</div>
+          <div class="strategy-pros-cons">
+            <span class="pro">✓ Best coherence</span>&nbsp;&nbsp;
+            <span class="con">✗ Slow, complex</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chunk-preview" id="chunk-preview">
+        <div class="chunk-preview-label">// PREVIEW — splitting: "The soup was way too salty. The broth made my mouth pucker. Service was slow but the staff were friendly."</div>
+        <div id="chunk-tokens"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Step 2 — Embedding</div>
+      <div class="card-title">Each chunk becomes a vector</div>
+      <div class="card-desc" style="margin-bottom:16px;">An embedding model (e.g. <code style="font-family:var(--mono);font-size:12px;color:var(--purple)">text-embedding-3-large</code>) reads each chunk and outputs a list of numbers — its coordinates in meaning-space. Semantically similar chunks will produce numerically similar vectors.</div>
+
+      <div class="embed-row">
+        <div class="embed-text">"The soup was way too salty."</div>
+        <div class="embed-arrow">→</div>
+        <div class="embed-vec" id="vec-salty"></div>
+      </div>
+      <div class="embed-row">
+        <div class="embed-text">"The broth made my mouth pucker."</div>
+        <div class="embed-arrow">→</div>
+        <div class="embed-vec" id="vec-pucker"></div>
+      </div>
+      <div class="embed-row">
+        <div class="embed-text">"Service was slow but staff friendly."</div>
+        <div class="embed-arrow">→</div>
+        <div class="embed-vec" id="vec-service"></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text3);font-family:var(--mono);">// showing 12 of 3,072 real dimensions — darker = higher value</div>
+    </div>
+
   </div>
 
-  <footer>Created with Claude &mdash; Anthropic &middot; IsoMetrix USA Inc</footer>
+  <!-- ═══════════════════════════════════════════════
+       ACT 2 — VECTOR SPACE
+  ═══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-1">
+
+    <div class="card">
+      <div class="card-label">Concept</div>
+      <div class="card-title">The database is a geometric space</div>
+      <div class="card-desc">After ingestion, every review exists as a point in high-dimensional space. Reviews that mean similar things cluster together — not because they share words, but because the model learned to place similar meanings close together from billions of training examples. Hover any point to explore.</div>
+    </div>
+
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="cvs2" height="380"></canvas>
+        <div class="tooltip" id="tip2"></div>
+      </div>
+      <div style="margin-top:12px;" class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#f07070"></div>Too salty cluster</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4ecb94"></div>Service cluster</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#60b8f5"></div>Food quality cluster</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f0a855"></div>Ambience cluster</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-label">Why clusters form</div>
+        <div class="card-desc">The embedding model was trained on massive text corpora. It learned that "salty," "puckering," "too much sodium," and "needed water" all appear in similar contexts — so they end up encoded near each other in the learned space.</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Similarity metric</div>
+        <div class="card-desc">Distance is measured using <strong>cosine similarity</strong> — the angle between two vectors, not their absolute positions. This makes comparisons robust to text length. Score of 1.0 = identical meaning. 0.0 = unrelated.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       ACT 3 — SEARCH
+  ═══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-2">
+
+    <div class="card">
+      <div class="card-label">Query time</div>
+      <div class="card-title">Searching the vector space</div>
+      <div class="card-desc">When a search arrives, it goes through the <em>same</em> embedding pipeline as the stored reviews — then the database finds the nearest vectors. The query never touches the raw review text directly.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Try it — pick a query intent</div>
+      <div class="chips-wrap" id="suggestion-chips"></div>
+      <input type="hidden" id="search-input" value="The soup was way too salty" />
+
+      <div style="margin-bottom:12px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:.08em;">// QUERY VECTOR (12 of 3,072 dims)</div>
+        <div class="embed-vec" id="vec-query" style="margin-bottom:4px;"></div>
+      </div>
+
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:.08em;">// RESULTS — threshold: similarity ≥ 0.70</div>
+      <div id="results-list"></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text3);">
+        <span style="color:var(--purple)">■</span> keyword match &nbsp;
+        <span style="color:var(--green)">■</span> semantic match &nbsp;
+        <span style="color:var(--text3)">■</span> below threshold
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">What just happened</div>
+      <ul class="steps">
+        <li class="step">
+          <div class="step-num" style="background:var(--purple-dim);color:var(--purple)">1</div>
+          <div>
+            <div class="step-title">Query embedded</div>
+            <div class="step-desc">The search phrase is passed through the same embedding model used at ingestion time. This is critical — the same model must be used both times or the vectors won't be comparable.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num" style="background:var(--purple-dim);color:var(--purple)">2</div>
+          <div>
+            <div class="step-title">ANN search</div>
+            <div class="step-desc">The DB runs an <strong>Approximate Nearest Neighbour</strong> search — an index structure (HNSW, IVF) that avoids comparing against every stored vector. Millisecond latency even at millions of records.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num" style="background:var(--green-dim);color:var(--green)">3</div>
+          <div>
+            <div class="step-title">Threshold applied</div>
+            <div class="step-desc">Only vectors above the similarity threshold are returned. The cutoff is tunable — a legal doc system might require 0.92+, a brainstorming tool might accept 0.50+.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num" style="background:var(--green-dim);color:var(--green)">4</div>
+          <div>
+            <div class="step-title">Results ranked</div>
+            <div class="step-desc">Matches are returned ordered by similarity score. The original review text is fetched from the DB alongside the vector, so the user sees readable results.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
 </div>
 
 <script>
-const points = [
-  { x: 0.50, y: 0.42, color:'#7F77DD', r:9,  label:'Your query',                   sub:'"The soup was way too salty"',        sim: null,  match: true,  anchor:'right' },
-  { x: 0.38, y: 0.52, color:'#1D9E75', r:8,  label:'Puckering broth',              sub:'Similarity: 0.82',                   sim: 0.82, match: true,  anchor:'left'  },
-  { x: 0.56, y: 0.34, color:'#1D9E75', r:7,  label:'Needed a gallon of water',     sub:'Similarity: 0.87',                   sim: 0.87, match: true,  anchor:'right' },
-  { x: 0.43, y: 0.36, color:'#1D9E75', r:7,  label:'Over-seasoned, couldn\'t finish', sub:'Similarity: 0.78',                sim: 0.78, match: true,  anchor:'left'  },
-  { x: 0.27, y: 0.82, color:'#B4B2A9', r:6,  label:'Pasta perfectly al dente',     sub:'Similarity: 0.18',                   sim: 0.18, match: false, anchor:'right' },
-  { x: 0.76, y: 0.86, color:'#B4B2A9', r:6,  label:'Very friendly staff',          sub:'Similarity: 0.06',                   sim: 0.06, match: false, anchor:'left'  },
-  { x: 0.18, y: 0.67, color:'#B4B2A9', r:5,  label:'Nice ambience',                sub:'Similarity: 0.09',                   sim: 0.09, match: false, anchor:'right' },
-  { x: 0.82, y: 0.60, color:'#EF9F27', r:6,  label:'Watery soup',                  sub:'Similarity: 0.52',                   sim: 0.52, match: false, anchor:'left'  },
+/* ══════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════ */
+function switchTab(i) {
+  document.querySelectorAll('.tab-btn').forEach((b,j) => b.classList.toggle('active', i===j));
+  document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', i===j));
+  if (i===1) setTimeout(drawSpace, 50);
+  if (i===2) setTimeout(initSearch, 50);
+}
+
+/* ══════════════════════════════════════════
+   ACT 1 — CHUNKING STRATEGIES
+══════════════════════════════════════════ */
+const REVIEW = "The soup was way too salty. The broth made my mouth pucker. Service was slow but the staff were friendly.";
+
+const strategies = [
+  {
+    id: 0,
+    chunks: [
+      { text: "The soup was way", color: '#9d96f5' },
+      { text: "too salty. The broth", color: '#60b8f5' },
+      { text: "made my mouth pucker.", color: '#4ecb94' },
+      { text: "Service was slow but", color: '#f0a855' },
+      { text: "the staff were friendly.", color: '#f07070' },
+    ],
+    note: "Fixed 4-token chunks — notice 'too salty' is split across chunks 1 and 2, losing context."
+  },
+  {
+    id: 1,
+    chunks: [
+      { text: "The soup was way too salty.", color: '#9d96f5' },
+      { text: "The broth made my mouth pucker.", color: '#60b8f5' },
+      { text: "Service was slow but the staff were friendly.", color: '#4ecb94' },
+    ],
+    note: "Sentence-level chunks — each chunk is a complete thought. Much better for semantic search."
+  },
+  {
+    id: 2,
+    chunks: [
+      { text: "The soup was way too salty.", color: '#9d96f5' },
+      { text: "too salty. The broth made", color: '#60b8f5' },
+      { text: "The broth made my mouth pucker.", color: '#4ecb94' },
+      { text: "mouth pucker. Service was slow", color: '#f0a855' },
+      { text: "Service was slow but the staff were friendly.", color: '#f07070' },
+    ],
+    note: "Sliding window with 2-token overlap — boundaries are blurred so no meaning falls through the cracks."
+  },
+  {
+    id: 3,
+    chunks: [
+      { text: "The soup was way too salty. The broth made my mouth pucker.", color: '#9d96f5' },
+      { text: "Service was slow but the staff were friendly.", color: '#4ecb94' },
+    ],
+    note: "Semantic chunking — AI detected a topic shift between food complaints and service. Two coherent chunks."
+  }
 ];
 
-const cvs = document.getElementById('cvs');
-const tip = document.getElementById('tip');
-const ctx = cvs.getContext('2d');
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
-
-function resize() {
-  const W = cvs.parentElement.clientWidth;
-  const H = 360;
-  cvs.style.width = W + 'px';
-  cvs.style.height = H + 'px';
-  cvs.width = W * DPR;
-  cvs.height = H * DPR;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  draw(null);
+function selectStrategy(i) {
+  document.querySelectorAll('.strategy-card').forEach((c,j) => c.classList.toggle('active', i===j));
+  const s = strategies[i];
+  const el = document.getElementById('chunk-tokens');
+  el.innerHTML = s.chunks.map(c =>
+    `<span class="chunk-token" style="background:${c.color}18;border-color:${c.color}55;color:${c.color}">${c.text}</span>`
+  ).join(' ');
+  document.querySelector('.chunk-preview-label').textContent = `// ${s.note}`;
 }
 
-function px(p) {
-  const W = cvs.clientWidth, H = cvs.clientHeight;
-  const pad = 20;
-  return { x: pad + p.x * (W - pad * 2), y: pad + p.y * (H - pad * 2) };
+selectStrategy(0);
+
+/* ══════════════════════════════════════════
+   EMBEDDING COLOUR CELLS
+══════════════════════════════════════════ */
+const embeddings = {
+  salty:   [0.68,0.78,0.82,0.88,0.75,0.55,0.70,0.20,0.60,0.85,0.72,0.40],
+  pucker:  [0.65,0.74,0.79,0.85,0.71,0.52,0.67,0.22,0.57,0.82,0.69,0.38],
+  service: [0.10,0.20,0.15,0.08,0.30,0.75,0.12,0.80,0.22,0.14,0.18,0.85],
+};
+
+function makeVecCells(vals, accent) {
+  return vals.map(v => {
+    const a = Math.round(v * 200 + 20);
+    return `<div class="vec-cell" style="background:${accent}${Math.round(v*200+20).toString(16).padStart(2,'0')};color:${v>0.5?'#fff':'#888'}">${v.toFixed(2)}</div>`;
+  }).join('');
 }
 
-function draw(hovered) {
-  const W = cvs.clientWidth, H = cvs.clientHeight;
-  ctx.clearRect(0, 0, W, H);
+document.getElementById('vec-salty').innerHTML   = makeVecCells(embeddings.salty,   '#9d96f5');
+document.getElementById('vec-pucker').innerHTML  = makeVecCells(embeddings.pucker,  '#60b8f5');
+document.getElementById('vec-service').innerHTML = makeVecCells(embeddings.service, '#4ecb94');
 
-  ctx.fillStyle = '#f6f5f0';
-  ctx.fillRect(0, 0, W, H);
+/* ══════════════════════════════════════════
+   ACT 2 — VECTOR SPACE
+══════════════════════════════════════════ */
+const spacePoints = [
+  // Salty cluster
+  { x:0.32, y:0.28, color:'#f07070', r:7, label:'The soup was way too salty',       cluster:'salty'   },
+  { x:0.24, y:0.38, color:'#f07070', r:6, label:'The broth made my mouth pucker',   cluster:'salty'   },
+  { x:0.40, y:0.22, color:'#f07070', r:6, label:'Over-seasoned, couldn\'t finish',  cluster:'salty'   },
+  { x:0.28, y:0.20, color:'#f07070', r:5, label:'Needed a gallon of water',         cluster:'salty'   },
+  { x:0.36, y:0.34, color:'#f07070', r:5, label:'Way too much salt in the risotto', cluster:'salty'   },
+  // Service cluster
+  { x:0.70, y:0.30, color:'#4ecb94', r:7, label:'Service was incredibly slow',      cluster:'service' },
+  { x:0.78, y:0.22, color:'#4ecb94', r:6, label:'Staff were friendly and attentive',cluster:'service' },
+  { x:0.76, y:0.38, color:'#4ecb94', r:5, label:'Waited 40 mins for our table',     cluster:'service' },
+  { x:0.65, y:0.24, color:'#4ecb94', r:5, label:'The waiter was very helpful',      cluster:'service' },
+  // Food quality cluster
+  { x:0.30, y:0.72, color:'#60b8f5', r:7, label:'Pasta was perfectly al dente',     cluster:'food'    },
+  { x:0.22, y:0.80, color:'#60b8f5', r:6, label:'The steak was cooked to perfection',cluster:'food'   },
+  { x:0.38, y:0.78, color:'#60b8f5', r:5, label:'Best pizza I\'ve had in years',    cluster:'food'    },
+  // Ambience cluster
+  { x:0.74, y:0.74, color:'#f0a855', r:6, label:'Lovely romantic atmosphere',       cluster:'ambience'},
+  { x:0.80, y:0.66, color:'#f0a855', r:5, label:'Cosy and intimate setting',        cluster:'ambience'},
+  { x:0.68, y:0.80, color:'#f0a855', r:5, label:'Great views of the river',         cluster:'ambience'},
+];
 
-  ctx.strokeStyle = 'rgba(0,0,0,0.05)';
-  ctx.lineWidth = 0.5;
-  for (let gx = 0; gx <= W; gx += 64) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
-  for (let gy = 0; gy <= H; gy += 60) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+const clusterLabels = [
+  { x:0.32, y:0.10, label:'🧂 Too salty', color:'#f07070' },
+  { x:0.72, y:0.12, label:'🛎 Service',   color:'#4ecb94' },
+  { x:0.28, y:0.90, label:'🍝 Food quality', color:'#60b8f5' },
+  { x:0.74, y:0.90, label:'✨ Ambience',  color:'#f0a855' },
+];
 
-  ctx.fillStyle = 'rgba(0,0,0,0.12)';
-  ctx.font = '11px -apple-system, sans-serif';
-  ctx.fillText('Sodium / excess →', 8, H - 8);
-  ctx.save(); ctx.translate(14, H - 40); ctx.rotate(-Math.PI/2);
-  ctx.fillText('Negative sentiment →', 0, 0); ctx.restore();
+let cvs2, ctx2;
 
-  const query = px(points[0]);
-  points.slice(1).forEach(p => {
-    if (!p.match) return;
-    const pp = px(p);
-    ctx.beginPath();
-    ctx.setLineDash([4,4]);
-    ctx.strokeStyle = p.color + '70';
-    ctx.lineWidth = 1;
-    ctx.moveTo(query.x, query.y);
-    ctx.lineTo(pp.x, pp.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    const mx = (query.x + pp.x) / 2;
-    const my = (query.y + pp.y) / 2;
-    ctx.font = '500 11px -apple-system, sans-serif';
-    ctx.fillStyle = p.color;
-    ctx.textAlign = 'center';
-    ctx.fillText(p.sim.toFixed(2), mx, my - 5);
-  });
-
-  points.forEach((p, i) => {
-    const pp = px(p);
-    const isHov = hovered === i;
-    const r = isHov ? p.r + 3 : p.r;
-
-    if (p.match && i > 0) {
-      ctx.beginPath();
-      ctx.arc(pp.x, pp.y, r + 8, 0, Math.PI*2);
-      ctx.fillStyle = p.color + '22';
-      ctx.fill();
-    }
-    if (i === 0) {
-      ctx.beginPath();
-      ctx.arc(pp.x, pp.y, r + 5, 0, Math.PI*2);
-      ctx.strokeStyle = p.color + '55';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    ctx.beginPath();
-    ctx.arc(pp.x, pp.y, r, 0, Math.PI*2);
-    ctx.fillStyle = p.color;
-    ctx.fill();
-
-    const lx = p.anchor === 'right' ? pp.x + r + 6 : pp.x - r - 6;
-    ctx.textAlign = p.anchor === 'right' ? 'left' : 'right';
-    ctx.font = '500 12px -apple-system, sans-serif';
-    ctx.fillStyle = i === 0 ? '#534AB7' : (p.match ? '#3d3d3a' : '#888780');
-    ctx.fillText(p.label, lx, pp.y - 2);
-    if (i === 0 || isHov) {
-      ctx.font = '11px -apple-system, sans-serif';
-      ctx.fillStyle = '#73726c';
-      ctx.fillText(p.sub, lx, pp.y + 12);
-    }
-  });
-}
-
-function getHovered(mx, my) {
-  let found = null;
-  points.forEach((p, i) => {
-    const pp = px(p);
-    if (Math.hypot(pp.x - mx, pp.y - my) < p.r + 10) found = i;
-  });
-  return found;
-}
-
-cvs.addEventListener('mousemove', e => {
-  const rect = cvs.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  const h = getHovered(mx, my);
-  cvs.style.cursor = h !== null ? 'pointer' : 'default';
-  draw(h);
-  if (h !== null) {
-    const p = points[h];
-    tip.style.display = 'block';
-    tip.style.left = (e.clientX - rect.left + 16) + 'px';
-    tip.style.top = (e.clientY - rect.top - 10) + 'px';
-    tip.innerHTML = `<strong>${p.label}</strong>${p.sub}${p.sim !== null ? `<br><span style="color:${p.color};font-weight:500">Similarity: ${p.sim.toFixed(2)}</span>` : ''}`;
-  } else {
-    tip.style.display = 'none';
+function drawSpace(hovered) {
+  if (!cvs2) {
+    cvs2 = document.getElementById('cvs2');
+    ctx2 = cvs2.getContext('2d');
   }
-});
-cvs.addEventListener('mouseleave', () => { draw(null); tip.style.display='none'; });
+  const DPR = Math.min(window.devicePixelRatio||1,2);
+  const W = cvs2.parentElement.clientWidth;
+  const H = 380;
+  cvs2.style.width = W+'px'; cvs2.style.height = H+'px';
+  cvs2.width = W*DPR; cvs2.height = H*DPR;
+  ctx2.setTransform(DPR,0,0,DPR,0,0);
 
-window.addEventListener('resize', resize);
-resize();
+  ctx2.fillStyle = '#181817';
+  ctx2.fillRect(0,0,W,H);
+
+  ctx2.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx2.lineWidth = 0.5;
+  for (let x=0;x<=W;x+=64){ctx2.beginPath();ctx2.moveTo(x,0);ctx2.lineTo(x,H);ctx2.stroke();}
+  for (let y=0;y<=H;y+=60){ctx2.beginPath();ctx2.moveTo(0,y);ctx2.lineTo(W,y);ctx2.stroke();}
+
+  const pad = 30;
+  function toXY(p){ return {x: pad + p.x*(W-pad*2), y: pad + p.y*(H-pad*2)}; }
+
+  // Cluster halos
+  const clusters = {
+    salty:   { cx:0.32, cy:0.28, color:'#f07070' },
+    service: { cx:0.73, cy:0.29, color:'#4ecb94' },
+    food:    { cx:0.30, cy:0.76, color:'#60b8f5' },
+    ambience:{ cx:0.74, cy:0.73, color:'#f0a855' },
+  };
+  Object.values(clusters).forEach(cl => {
+    const {x,y} = toXY({x:cl.cx,y:cl.cy});
+    const grad = ctx2.createRadialGradient(x,y,10,x,y,90);
+    grad.addColorStop(0, cl.color+'22');
+    grad.addColorStop(1, 'transparent');
+    ctx2.beginPath();
+    ctx2.arc(x,y,90,0,Math.PI*2);
+    ctx2.fillStyle = grad;
+    ctx2.fill();
+  });
+
+  // Points
+  spacePoints.forEach((p,i) => {
+    const {x,y} = toXY(p);
+    const isHov = hovered===i;
+    const r = isHov ? p.r+3 : p.r;
+    ctx2.beginPath();
+    ctx2.arc(x,y,r,0,Math.PI*2);
+    ctx2.fillStyle = p.color + (isHov?'ff':'cc');
+    ctx2.fill();
+    if (isHov) {
+      ctx2.beginPath();
+      ctx2.arc(x,y,r+4,0,Math.PI*2);
+      ctx2.strokeStyle = p.color+'66';
+      ctx2.lineWidth = 2;
+      ctx2.stroke();
+    }
+  });
+
+  // Cluster labels
+  clusterLabels.forEach(cl => {
+    const {x,y} = toXY({x:cl.x,y:cl.y});
+    ctx2.font = '500 12px "DM Sans", sans-serif';
+    ctx2.fillStyle = cl.color+'cc';
+    ctx2.textAlign = 'center';
+    ctx2.fillText(cl.label, x, y);
+  });
+}
+
+/* ══════════════════════════════════════════
+   ACT 2 — CANVAS EVENTS
+══════════════════════════════════════════ */
+function initSpaceEvents() {
+  cvs2 = document.getElementById('cvs2');
+  ctx2 = cvs2.getContext('2d');
+  const tip2 = document.getElementById('tip2');
+  const pad = 30;
+
+  function getHov(e) {
+    const rect = cvs2.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const W = cvs2.clientWidth, H = cvs2.clientHeight;
+    let found = null;
+    spacePoints.forEach((p,i) => {
+      const x = pad + p.x*(W-pad*2);
+      const y = pad + p.y*(H-pad*2);
+      if (Math.hypot(x-mx,y-my) < p.r+10) found=i;
+    });
+    return found;
+  }
+
+  cvs2.addEventListener('mousemove', e => {
+    const h = getHov(e);
+    cvs2.style.cursor = h!==null?'pointer':'default';
+    drawSpace(h);
+    if (h!==null) {
+      const p = spacePoints[h];
+      const rect = cvs2.getBoundingClientRect();
+      tip2.style.display='block';
+      tip2.style.left=(e.clientX-rect.left+14)+'px';
+      tip2.style.top=(e.clientY-rect.top-10)+'px';
+      tip2.innerHTML=`<strong>"${p.label}"</strong><span>Cluster: ${p.cluster}</span>`;
+    } else { tip2.style.display='none'; }
+  });
+  cvs2.addEventListener('mouseleave',()=>{ drawSpace(null); tip2.style.display='none'; });
+}
+
+/* ══════════════════════════════════════════
+   ACT 3 — SEARCH (preset-based)
+   Each preset: a query intent with its own
+   vector pattern and per-review scores.
+   Reviews are the same pool throughout;
+   only the similarity scores change.
+══════════════════════════════════════════ */
+
+// Master review pool — text & whether it's
+// an exact keyword match for a given preset
+const reviewPool = [
+  { id:'salty1',   text: 'The soup was way too salty.'              },
+  { id:'salty2',   text: 'I needed a gallon of water after that.'   },
+  { id:'salty3',   text: 'The broth made my mouth pucker.'          },
+  { id:'salty4',   text: 'Over-seasoned — I couldn\'t finish it.'   },
+  { id:'salty5',   text: 'Way too much salt in the risotto.'        },
+  { id:'watery',   text: 'Watery soup, barely any flavour.'         },
+  { id:'pasta',    text: 'The pasta was perfectly al dente.'        },
+  { id:'steak',    text: 'The steak was cooked to perfection.'      },
+  { id:'pizza',    text: 'Best pizza I\'ve had in years.'           },
+  { id:'slow',     text: 'Service was incredibly slow.'             },
+  { id:'wait',     text: 'Waited 40 minutes just to be seated.'     },
+  { id:'friendly', text: 'Staff were warm and attentive.'           },
+  { id:'waiter',   text: 'Our waiter was knowledgeable and helpful.'},
+  { id:'atmos1',   text: 'Lovely romantic atmosphere.'              },
+  { id:'atmos2',   text: 'Cosy and intimate — perfect for a date.'  },
+  { id:'atmos3',   text: 'Great views of the river from our table.' },
+];
+
+// Preset queries — each defines:
+//   query:   string shown in the input
+//   vec:     12-dim vector (illustrative)
+//   hint:    shown below the input as a suggestion chip
+//   scores:  { reviewId: similarity }  (omit = 0.05)
+const presets = [
+  {
+    query: 'The soup was way too salty',
+    hint:  'over-salted food',
+    vec:   [0.88, 0.82, 0.78, 0.90, 0.75, 0.20, 0.15, 0.10, 0.12, 0.55, 0.70, 0.40],
+    scores: {
+      salty1: 1.00, salty2: 0.87, salty3: 0.82,
+      salty4: 0.78, salty5: 0.74, watery: 0.52,
+      pasta:  0.18, slow:   0.11, atmos1: 0.08,
+      steak:  0.15, pizza:  0.14, wait:   0.09,
+      friendly:0.07,waiter: 0.08, atmos2: 0.07, atmos3:0.06,
+    },
+    keyword: 'salty1',
+  },
+  {
+    query: 'the food here is exceptional',
+    hint:  'excellent food quality',
+    vec:   [0.15, 0.20, 0.25, 0.10, 0.18, 0.92, 0.88, 0.85, 0.80, 0.30, 0.22, 0.18],
+    scores: {
+      pasta:  0.91, steak:  0.89, pizza:  0.85,
+      salty4: 0.38, watery: 0.32, salty1: 0.20,
+      salty2: 0.15, salty3: 0.18, salty5: 0.22,
+      slow:   0.14, wait:   0.12, friendly:0.28,
+      waiter: 0.30, atmos1: 0.42, atmos2: 0.40, atmos3:0.35,
+    },
+    keyword: null,
+  },
+  {
+    query: 'rude and inattentive waiting staff',
+    hint:  'bad service',
+    vec:   [0.10, 0.12, 0.08, 0.06, 0.15, 0.20, 0.85, 0.90, 0.88, 0.82, 0.78, 0.15],
+    scores: {
+      slow:    0.88, wait:    0.85, friendly: 0.76,
+      waiter:  0.72, salty1:  0.18, salty4:   0.20,
+      pasta:   0.15, steak:   0.14, pizza:    0.13,
+      atmos1:  0.35, atmos2:  0.30, atmos3:   0.28,
+      salty2:  0.10, salty3:  0.11, salty5:   0.12, watery:0.16,
+    },
+    keyword: null,
+  },
+  {
+    query: 'nice place for a romantic dinner',
+    hint:  'ambience & atmosphere',
+    vec:   [0.12, 0.10, 0.08, 0.06, 0.20, 0.18, 0.22, 0.25, 0.30, 0.88, 0.92, 0.85],
+    scores: {
+      atmos1:  0.94, atmos2:  0.91, atmos3:  0.82,
+      friendly:0.55, waiter:  0.52, slow:    0.30,
+      pasta:   0.42, steak:   0.44, pizza:   0.38,
+      salty1:  0.10, salty2:  0.08, salty3:  0.09,
+      salty4:  0.11, salty5:  0.10, watery:  0.08, wait:0.22,
+    },
+    keyword: null,
+  },
+];
+
+// Suggestion chips shown below the input
+const suggestions = [
+  'The soup was way too salty',
+  'the food here is exceptional',
+  'rude and inattentive waiting staff',
+  'nice place for a romantic dinner',
+];
+
+// Find the closest preset to what the user typed
+function matchPreset(text) {
+  const t = text.toLowerCase().trim();
+  // Exact or very close match first
+  for (const p of presets) {
+    if (t === p.query.toLowerCase()) return p;
+  }
+  // Keyword overlap scoring
+  const words = t.split(/\s+/).filter(w => w.length > 3);
+  let best = presets[0], bestScore = -1;
+  for (const p of presets) {
+    const pWords = p.query.toLowerCase().split(/\s+/);
+    const overlap = words.filter(w => pWords.some(pw => pw.includes(w) || w.includes(pw))).length;
+    // Also score against hint
+    const hintWords = p.hint.toLowerCase().split(/\s+/);
+    const hintOverlap = words.filter(w => hintWords.some(hw => hw.includes(w) || w.includes(hw))).length;
+    const score = overlap * 2 + hintOverlap;
+    if (score > bestScore) { bestScore = score; best = p; }
+  }
+  return best;
+}
+
+function initSearch() {
+  renderChips();
+  renderQueryVec();
+  renderResults();
+}
+
+function renderChips() {
+  const wrap = document.getElementById('suggestion-chips');
+  if (!wrap) return;
+  wrap.innerHTML = suggestions.map(s =>
+    `<button class="chip" onclick="useChip(this)" data-query="${s}">${s}</button>`
+  ).join('');
+}
+
+function useChip(el) {
+  document.getElementById('search-input').value = el.dataset.query;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderQueryVec();
+  renderResults();
+}
+
+function renderQueryVec() {
+  const text = document.getElementById('search-input').value;
+  const p = matchPreset(text);
+  document.getElementById('vec-query').innerHTML = makeVecCells(p.vec, '#9d96f5');
+}
+
+function runSearch() {
+  // Highlight matching chip
+  const text = document.getElementById('search-input').value.toLowerCase().trim();
+  document.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.query.toLowerCase() === text);
+  });
+  renderQueryVec();
+  renderResults();
+}
+
+function renderResults() {
+  const text = document.getElementById('search-input').value;
+  const preset = matchPreset(text);
+  const list = document.getElementById('results-list');
+
+  // Build scored list
+  const scored = reviewPool.map(r => ({
+    ...r,
+    sim: preset.scores[r.id] ?? 0.05,
+    keyword: r.id === preset.keyword,
+  })).sort((a,b) => b.sim - a.sim);
+
+  list.innerHTML = scored.map(r => {
+    const matched = r.sim >= 0.70;
+    const barColor = r.sim >= 0.85 ? '#4ecb94' : r.sim >= 0.70 ? '#4ecb9480' : r.sim >= 0.40 ? '#f0a855' : '#333';
+    const pctColor = r.sim >= 0.70 ? '#4ecb94'  : r.sim >= 0.40 ? '#f0a855'  : '#555450';
+    let tag = '';
+    if (r.keyword)      tag = `<span class="result-tag tag-keyword">keyword + semantic</span>`;
+    else if (matched)   tag = `<span class="result-tag tag-semantic">semantic match ✓</span>`;
+    else                tag = `<span class="result-tag tag-missed">below threshold</span>`;
+    return `<div class="result-row ${r.keyword ? 'keyword-only' : matched ? 'matched' : ''}" style="opacity:${r.sim < 0.10 ? 0.45 : 1}">
+      <div class="result-text">${r.text}</div>
+      ${tag}
+      <div class="bar-wrap"><div class="bar-fill" style="width:${r.sim*100}%;background:${barColor}"></div></div>
+      <div class="sim-pct" style="color:${pctColor}">${r.sim.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  initSearch();
+  // Lazy init act2 canvas events once tab is first clicked
+  const act2btn = document.querySelectorAll('.tab-btn')[1];
+  act2btn.addEventListener('click', () => {
+    setTimeout(() => { drawSpace(null); initSpaceEvents(); }, 60);
+  }, { once: true });
+});
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('panel-1').classList.contains('active')) drawSpace(null);
+});
 </script>
 </body>
 </html>
